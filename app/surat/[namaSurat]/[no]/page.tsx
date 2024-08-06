@@ -1,13 +1,18 @@
 "use client";
 import Container from "@/components/container";
 import Navbar from "@/components/ui/navbar";
-import { QuranDataLengkap, QuranLengkap } from "@/types/main";
+import {
+  LinkNavbar,
+  LinkNavbarPlus,
+  QuranDataLengkap,
+  QuranLengkap,
+} from "@/types/main";
 import { useEffect, useRef, useState } from "react";
 import feather from "feather-icons";
 import Bismillah from "@/app/assets/Bismillah";
 import { Amiri } from "next/font/google";
 import { Tooltip } from "react-tooltip";
-import { checkUser, supabase } from "@/lib/supabase";
+import { addBookmarks, checkUser, supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { toast } from "react-toastify";
 import { lastReadType } from "@/types/database";
@@ -28,6 +33,7 @@ export default function Page({
   const [srcAudio, setSrcAudio] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [whichAudio, setWhichAudio] = useState<number>();
+  const [isBookmarks, setIsBookmarks] = useState(false);
   async function getDataSurahDetail() {
     const res = await fetch(`https://equran.id/api/v2/surat/${params.no}`);
     const data: QuranLengkap = await res.json();
@@ -67,7 +73,20 @@ export default function Page({
               top: parseInt(lastRead.scrollY, 10),
               behavior: "smooth",
             });
-            toast.success("Sukses me-load posisi sebelumnya!");
+            toast.success("Sukses me-load posisi sebelumnya!", { toastId: 2 });
+          }
+          const { data: dataBookmarks, error: errorBookmarks } = await supabase
+            .from("bookmarks")
+            .select()
+            .eq("userId", user.id)
+            .eq("surat", params.namaSurat)
+            .maybeSingle();
+          if (errorBookmarks) {
+            toast.error(errorBookmarks.message);
+            return;
+          }
+          if (dataBookmarks) {
+            setIsBookmarks(true);
           }
         } catch (err) {
           console.error(err);
@@ -75,6 +94,13 @@ export default function Page({
         }
       }
     });
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+        audioRef.current.load();
+      }
+    };
   }, []);
   function handlePausePlay(src: string, id: number) {
     if (audioRef.current) {
@@ -141,10 +167,16 @@ export default function Page({
       console.error(err);
     }
   }
-
+  const list: LinkNavbarPlus[] = [
+    {
+      display: "Add to bookmark",
+      path: "bookmarksAdd",
+      params: params.namaSurat,
+    },
+  ];
   return (
     <Container>
-      <Navbar back />
+      <Navbar back tambahanList={list} />
       <audio
         ref={audioRef}
         onEnded={() => {
@@ -209,17 +241,43 @@ export default function Page({
             </div>
           ))}
           {userData && (
-            <button
-              onClick={handleSave}
-              data-tooltip-id="saveChanges"
-              data-tooltip-content="Save Posisi Saat Ini!"
-              className="bg-purple-600 rounded-full fixed bottom-4 right-4 p-4 cursor-pointer"
-            >
-              <div
-                dangerouslySetInnerHTML={{ __html: feather.icons.save.toSvg() }}
-              ></div>
-              <Tooltip id="saveChanges" />
-            </button>
+            <>
+              <button
+                onClick={handleSave}
+                data-tooltip-id="saveChanges"
+                data-tooltip-content="Save Posisi Saat Ini!"
+                className="bg-purple-600 rounded-full fixed bottom-4 right-4 p-4 cursor-pointer"
+              >
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: feather.icons.save.toSvg(),
+                  }}
+                ></div>
+                <Tooltip id="saveChanges" />
+              </button>
+              <button
+                data-tooltip-id="addBookmarks"
+                onClick={() =>
+                  addBookmarks(
+                    userData,
+                    params.namaSurat,
+                    undefined,
+                    setIsBookmarks
+                  )
+                }
+                data-tooltip-content="Tambah ke daftar surat yang anda suka!"
+                className="bg-purple-600 rounded-full fixed bottom-4 left-4 p-4 cursor-pointer"
+              >
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: feather.icons.star.toSvg({
+                      fill: isBookmarks ? "white" : undefined,
+                    }),
+                  }}
+                ></div>
+                <Tooltip id="addBookmarks" />
+              </button>
+            </>
           )}
         </>
       ) : (

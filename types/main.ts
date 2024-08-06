@@ -73,3 +73,7 @@ export interface LinkNavbar {
   display: string;
   path: string;
 }
+
+export interface LinkNavbarPlus extends LinkNavbar {
+  params?: any;
+}

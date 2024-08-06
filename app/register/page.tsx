@@ -27,10 +27,13 @@ const Register = () => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const registerr: SubmitHandler<RegisterT> = async (dataForm) => {
+    setLoading(true);
+    toast("Tunggu Sebentar...", { delay: 1000, toastId: 10092 });
     if (dataForm.confirmPassword !== dataForm.password) {
       setError("confirmPassword", {
         message: "Password not same!",
       });
+      setLoading(false);
       return;
     }
     try {
@@ -39,25 +42,17 @@ const Register = () => {
         password: dataForm.password,
       });
       if (error) {
+        setLoading(false);
         toast.error(error.message);
         return;
       }
+      toast.success("Check you're email to verify!");
+      router.push("/login");
     } catch (err) {
+      setLoading(false);
       console.error(err);
     }
   };
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((state) => {
-      if (state === "SIGNED_IN") {
-        router.push("/home");
-      }
-    });
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
   useEffect(() => {
     checkUser().then((user) => {
       if (user) {
@@ -70,78 +65,80 @@ const Register = () => {
   }, []);
   return (
     <Container center>
-      {!loading && (
-        <Card>
-          <form onSubmit={handleSubmit(registerr)}>
-            <CardHeader>
-              <CardTitle>Register</CardTitle>
-            </CardHeader>
-            <CardBody>
-              <div className="flex flex-col gap-6">
-                <Input
-                  label="Email"
-                  placeholder="example123@example.com"
-                  error={errors.email?.message}
-                  type="email"
-                  {...register("email", {
-                    required: {
-                      value: true,
-                      message: "Please enter the email!",
-                    },
-                  })}
-                />
-                <Input
-                  label="Password"
-                  placeholder="example123321@*"
-                  error={errors.password?.message}
-                  type="password"
-                  {...register("password", {
-                    required: {
-                      value: true,
-                      message: "Please enter the password!",
-                    },
-                  })}
-                />
-                <Input
-                  label="Confirm Password"
-                  placeholder="example123321@*"
-                  error={errors.confirmPassword?.message}
-                  type="password"
-                  {...register("confirmPassword", {
-                    required: {
-                      value: true,
-                      message: "Please confirm you're password!",
-                    },
-                  })}
-                />
-              </div>
-            </CardBody>
-            <CardFooter>
-              <div className="flex justify-between">
-                <Button type="submit" size="small">
-                  Register
-                </Button>
-                <div className="flex gap-2">
-                  <Link href="/login">
-                    <Button type="button" size="small" styleButton="secondary">
-                      Login
-                    </Button>
-                  </Link>
-
-                  <Button
-                    type="button"
-                    size="small"
-                    styleButton="secondary"
-                    onClick={() => router.back()}
-                  >
-                    Back
+      <Card>
+        <form onSubmit={handleSubmit(registerr)}>
+          <CardHeader>
+            <CardTitle>Register</CardTitle>
+          </CardHeader>
+          <CardBody>
+            <div className="flex flex-col gap-6">
+              <Input
+                label="Email"
+                placeholder="example123@example.com"
+                error={errors.email?.message}
+                type="email"
+                {...register("email", {
+                  required: {
+                    value: true,
+                    message: "Please enter the email!",
+                  },
+                })}
+              />
+              <Input
+                label="Password"
+                placeholder="example123321@*"
+                error={errors.password?.message}
+                type="password"
+                {...register("password", {
+                  required: {
+                    value: true,
+                    message: "Please enter the password!",
+                  },
+                })}
+              />
+              <Input
+                label="Confirm Password"
+                placeholder="example123321@*"
+                error={errors.confirmPassword?.message}
+                type="password"
+                {...register("confirmPassword", {
+                  required: {
+                    value: true,
+                    message: "Please confirm you're password!",
+                  },
+                })}
+              />
+            </div>
+          </CardBody>
+          <CardFooter>
+            <div className="flex justify-between">
+              <Button
+                type="submit"
+                size="small"
+                disabled={loading ? true : undefined}
+              >
+                Register
+              </Button>
+              <div className="flex gap-2">
+                <Link href="/login">
+                  <Button type="button" size="small" styleButton="secondary">
+                    Login
                   </Button>
-                </div>
+                </Link>
+
+                <Button
+                  type="button"
+                  size="small"
+                  styleButton="secondary"
+                  onClick={() => router.back()}
+                >
+                  Back
+                </Button>
               </div>
-            </CardFooter>
-          </form>
-        </Card>
-      )}
+            </div>
+          </CardFooter>
+        </form>
+      </Card>
     </Container>
   );
 };

@@ -3,8 +3,16 @@ import Container from "@/components/container";
 import Button from "@/components/ui/button";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const Page = () => {
+  const router = useRouter();
+  useEffect(() => {
+    setTimeout(() => {
+      router.push("/home");
+    }, 2000);
+  }, [router]);
   return (
     <Container center column>
       <motion.img
@@ -24,26 +32,6 @@ const Page = () => {
       >
         Quran Web
       </motion.h1>
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2 }}
-        className="font-semibold mb-2"
-      >
-        <span className="text-purple-700">Learn</span>{" "}
-        <span className="text-yellow-500">Quran</span> and{" "}
-        <span className="text-blue-500">Recite</span> once{" "}
-        <span className="text-red-600">everyday!</span>
-      </motion.p>
-      <Link href="/home">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2.3 }}
-        >
-          <Button>Get started!</Button>
-        </motion.div>
-      </Link>
     </Container>
   );
 };

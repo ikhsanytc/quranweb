@@ -1,18 +1,22 @@
 "use client";
-import { checkUser, supabase } from "@/lib/supabase";
+import { addBookmarks, checkUser, supabase } from "@/lib/supabase";
 import Link from "next/link";
 import React, { FC, useEffect, useRef, useState } from "react";
 import feather from "feather-icons";
 import { useRouter } from "next/navigation";
-import { LinkNavbar } from "@/types/main";
+import { LinkNavbar, LinkNavbarPlus } from "@/types/main";
+import { User } from "@supabase/supabase-js";
+import { toast } from "react-toastify";
 
 interface Props {
   back?: boolean;
+  tambahanList?: LinkNavbarPlus[];
 }
 
-const Navbar: FC<Props> = ({ back }) => {
+const Navbar: FC<Props> = ({ back, tambahanList }) => {
   const [isLogin, setIsLogin] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [userData, setUserData] = useState<User>();
   const drawerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const links: LinkNavbar[] = [
@@ -25,6 +29,7 @@ const Navbar: FC<Props> = ({ back }) => {
     checkUser().then((user) => {
       if (user) {
         setIsLogin(true);
+        setUserData(user);
       }
     });
   }, []);
@@ -43,6 +48,23 @@ const Navbar: FC<Props> = ({ back }) => {
   async function logout() {
     await supabase.auth.signOut();
     router.push("/login");
+  }
+
+  async function onTambahanListClick(link: LinkNavbarPlus) {
+    switch (link.path) {
+      case "none":
+        alert("None!");
+        return;
+      case "bookmarksAdd":
+        if (userData) {
+          addBookmarks(userData, link.params as string, setDrawerOpen);
+        }
+        setDrawerOpen(false);
+        return;
+      default:
+        router.push(link.path);
+        return;
+    }
   }
   return (
     <>
@@ -74,6 +96,16 @@ const Navbar: FC<Props> = ({ back }) => {
                 {link.display}
               </Link>
             ))}
+            {tambahanList &&
+              tambahanList.map((link, idx) => (
+                <Link
+                  href={link.path}
+                  key={idx}
+                  className="font-semibold hover:border-b-2 hover:border-blue-500"
+                >
+                  {link.display}
+                </Link>
+              ))}
             {!isLogin ? (
               <Link
                 href="/login"
@@ -110,7 +142,7 @@ const Navbar: FC<Props> = ({ back }) => {
           <span className="text-yellow-500">Quran</span> Web
         </h1>
         <hr />
-        <div className="mt-5 flex text-center">
+        <div className="mt-5 flex text-center flex-col gap-4">
           {links.map((link, idx) => (
             <Link
               href={link.path}
@@ -120,6 +152,31 @@ const Navbar: FC<Props> = ({ back }) => {
               {link.display}
             </Link>
           ))}
+          {tambahanList &&
+            tambahanList.map((link, idx) => (
+              <a
+                onClick={() => onTambahanListClick(link)}
+                key={idx}
+                className="bg-purple-600 py-2 rounded-lg shadow w-full focus:ring transition duration-150 hover:bg-purple-700 active:bg-purple-500"
+              >
+                {link.display}
+              </a>
+            ))}
+          {!isLogin ? (
+            <Link
+              href="/login"
+              className="bg-purple-600 py-2 rounded-lg shadow w-full focus:ring transition duration-150 hover:bg-purple-700 active:bg-purple-500"
+            >
+              Login
+            </Link>
+          ) : (
+            <button
+              onClick={logout}
+              className="bg-purple-600 py-2 rounded-lg shadow w-full focus:ring transition duration-150 hover:bg-purple-700 active:bg-purple-500"
+            >
+              Logout
+            </button>
+          )}
         </div>
       </div>
       <div className="mt-14"></div>

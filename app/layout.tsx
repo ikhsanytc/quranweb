@@ -21,7 +21,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         {children}
-        <ToastContainer theme="dark" />
+        <ToastContainer theme="dark" draggable />
       </body>
     </html>
   );
